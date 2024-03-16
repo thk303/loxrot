@@ -62,6 +62,35 @@ long long Rotate::getFileAgeInSeconds(const std::wstring filename) {
     return static_cast<int>(std::chrono::duration_cast<std::chrono::seconds>(duration).count());
 }
 
+// Set the creation time of a file
+void Rotate::setCreationTime(const std::wstring& filename) {
+    // Open the file
+    HANDLE hFile = CreateFileW(filename.c_str(), FILE_WRITE_ATTRIBUTES, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (hFile == INVALID_HANDLE_VALUE)
+        Logging::error(L"Coult not open file " + filename + L" for setting creation time");
+
+    // Get the current system time
+    auto now = std::chrono::system_clock::now();
+    auto epoch = now.time_since_epoch();
+    auto seconds = std::chrono::duration_cast<std::chrono::seconds>(epoch);
+    // Get the current system time
+    SYSTEMTIME st;
+    GetSystemTime(&st);
+
+    // Convert the system time to file time
+    FILETIME ft;
+    SystemTimeToFileTime(&st, &ft);
+
+    // Set the creation time of the file
+    if (!SetFileTime(hFile, &ft, NULL, NULL)) {
+        CloseHandle(hFile);
+        Logging::error(L"Coult not open file " + filename + L" for setting creation time");
+    }
+
+    // Close the file
+    CloseHandle(hFile);
+}
+
 // Rotate a file based on a configuration
 int Rotate::rotateFile(Config::Section& config) {
     // Initialize the total number of renames
@@ -155,6 +184,8 @@ int Rotate::rotateFile(Config::Section& config) {
                                 }
                                 std::ofstream ofs(file, std::ios::trunc);
                                 ofs.close();
+                                // Set the creation time of the truncated file to now
+                                setCreationTime(file);
                                 Logging::info(L"Truncated " + file2process);
                             }
                             else {

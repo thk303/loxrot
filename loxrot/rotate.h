@@ -70,6 +70,13 @@ private:
     long long getFileAgeInSeconds(const std::wstring filename);
 
     /**
+     * \brief Set the creation time of the truncated file to now.
+     * \param filename The name of the file.
+     * \return void
+     */
+    void setCreationTime(const std::wstring& filename);
+
+    /**
      * \brief Rotate a file based on a configuration.
      * \param config The configuration to use for rotation.
      * \return The status of the rotation.
