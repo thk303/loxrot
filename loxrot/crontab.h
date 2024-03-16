@@ -26,21 +26,43 @@
 #include <string>
 #include <vector>
 
+/**
+ * \class Crontab
+ * \brief A class to handle crontab scheduling.
+ */
 class Crontab
 {
 public:
-	Crontab();
-	~Crontab();
-	bool parse(const std::wstring& crontabstring);
-	bool isTimeToRotate();
+    /**
+     * \brief Default constructor for Crontab.
+     */
+    Crontab();
+
+    /**
+     * \brief Destructor for Crontab.
+     */
+    ~Crontab();
+
+    /**
+     * \brief Parse a crontab string.
+     * \param crontabstring The crontab string to parse.
+     * \return True if the parsing was successful, false otherwise.
+     */
+    bool parse(const std::wstring& crontabstring);
+
+    /**
+     * \brief Check if it's time to rotate.
+     * \return True if it's time to rotate, false otherwise.
+     */
+    bool isTimeToRotate();
 
 private:
-	tm last;
-	std::wstring crontabstring;
-	std::vector<int> minutes;
-	std::vector<int> hours;
-	std::vector<int> days;
-	std::vector<int> months;
-	std::vector<int> weekdays;
+    tm last; ///< The last time the crontab was checked.
+    std::wstring crontabstring; ///< The crontab string.
+    std::vector<int> minutes; ///< The minutes field of the crontab.
+    std::vector<int> hours; ///< The hours field of the crontab.
+    std::vector<int> days; ///< The days field of the crontab.
+    std::vector<int> months; ///< The months field of the crontab.
+    std::vector<int> weekdays; ///< The weekdays field of the crontab.
 };
 

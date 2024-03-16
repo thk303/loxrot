@@ -23,6 +23,11 @@
 	OF SUCH DAMAGE.
 */
 #pragma once
+/// \brief The name of the program as a string.
 const std::string PROGRAMNAME = "loxrot";
+
+/// \brief The name of the program as a wide string.
 const std::wstring PROGRAMNAMEW = L"loxrot";
+
+/// \brief The version of the program.
 const std::wstring VERSION = L"0.1";

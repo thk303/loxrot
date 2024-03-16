@@ -24,28 +24,42 @@
 */
 #include "tools.h"
 
+// Convert a string to a wide string
 std::wstring Tools::stringToWstring(const std::string& str, int codepage)
 {
-    int len = MultiByteToWideChar(codepage, 0, str.c_str(), -1, NULL, 0);
-    if (len > 0)
+	// Get the length of the wide string
+	int len = MultiByteToWideChar(codepage, 0, str.c_str(), -1, NULL, 0);
+	// If the length is greater than 0
+	if (len > 0)
 	{
+		// Create a wide string and resize it to the correct length
 		std::wstring wstr;
 		wstr.resize(len);
+		// Convert the string to a wide string
 		MultiByteToWideChar(codepage, 0, str.c_str(), -1, &wstr[0], len);
+		// Return the wide string
 		return wstr;
 	}
-    return std::wstring();
+	// If the length is not greater than 0, return an empty wide string
+	return std::wstring();
 }
 
+// Convert a wide string to a string
 std::string Tools::wstringToString(const std::wstring& wstr, int codepage)
 {
-    int len = WideCharToMultiByte(codepage, 0, wstr.c_str(), -1, NULL, 0, NULL, NULL);
-    if (len > 0)
+	// Get the length of the string
+	int len = WideCharToMultiByte(codepage, 0, wstr.c_str(), -1, NULL, 0, NULL, NULL);
+	// If the length is greater than 0
+	if (len > 0)
 	{
+		// Create a string and resize it to the correct length
 		std::string str;
 		str.resize(len);
+		// Convert the wide string to a string
 		WideCharToMultiByte(codepage, 0, wstr.c_str(), -1, &str[0], len, NULL, NULL);
+		// Return the string
 		return str;
 	}
-    return std::string();
+	// If the length is not greater than 0, return an empty string
+	return std::string();
 }

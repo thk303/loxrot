@@ -22,6 +22,7 @@
     NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
     OF SUCH DAMAGE.
 */
+
 #include "config.h"
 #include <chrono>
 #include <regex>
@@ -29,19 +30,23 @@
 #include "crontab.h"
 #include <map>
 
+// Default constructor for Config
 Config::Config()
 {
 }
 
+// Destructor for Config
 Config::~Config()
 {
 }
 
+// Get the entries of a specific section in the configuration
 const std::map<std::wstring, std::wstring>& Config::getSection(const std::wstring& section)
 {
     return configs[section].entries;
 }
 
+// Get all the configurations
 std::map<std::wstring, Config::Section>& Config::getConfigs()
 {
     return configs;
@@ -76,23 +81,37 @@ int Config::convertToSeconds(const std::wstring& duration) {
     }
 }
 
+// Load the configuration from a file
 void Config::load(const std::wstring& configfile)
 {
+    // Log that the configuration parsing has started
     Logging::debug(L"Entered parseConfig");
+
+    // Open the configuration file
     std::wifstream file(configfile);
     std::wstring line;
     std::wstring section;
+
+    // Read the file line by line
     while (std::getline(file, line)) {
+
+        // Skip comments and empty lines
         if (std::regex_match(line, std::wregex(L"(\\s*#.*)|(\\s*;.*)")))
             continue;
+
         std::wsmatch match;
+
+        // If the line matches the pattern of a section header, store the section name
         if (std::regex_match(line, match, std::wregex(L"^\\[(.+)\\]$"))) {
             section = match[1];
         }
         else {
+            // If the line matches the pattern of a key-value pair, store the pair in the current section
             if (std::regex_match(line, match, std::wregex(L"^([A-Za-z]+)\\s*[\\=]{1}\\s*(.*)$"))) {
                 std::wstring key = match[1];
                 std::wstring value = match[2];
+
+                // Validate and process specific keys
                 if (key == L"KeepFiles") {
                     if (!regex_match(value, std::wregex(L"^(\\-*\\d+)$"))) {
                         std::wstring msg = L"Invalid value " + key + L" in section " + section + L" in config file " + configfile;
@@ -120,11 +139,14 @@ void Config::load(const std::wstring& configfile)
                 else if(key == L"Timer") {
                     configs[section].crontab.parse(value);
 				}
+
+                // Store the key-value pair in the current section
                 configs[section].entries[key] = value;
             }
         }
     }
-    // Check the configs and add default values if necessary
+    
+    // After all lines are processed, check the configurations and add default values if necessary
     for (std::map<std::wstring, Section>::iterator it = configs.begin(); it != configs.end(); it++) {
         if(it->second.entries.find(L"KeepFiles") == it->second.entries.end()) {
 			it->second.entries[L"KeepFiles"] = L"-1";
@@ -149,5 +171,6 @@ void Config::load(const std::wstring& configfile)
             it->second.entries[L"MinAge"] = L"0m";
         }
 	}
+    // Log that the configuration parsing has finished
     Logging::debug(L"Leaving parseConfig");
 }

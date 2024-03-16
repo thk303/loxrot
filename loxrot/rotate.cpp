@@ -33,12 +33,15 @@
 #include <windows.h>
 #include "tools.h"
 
+// Constructor
 Rotate::Rotate() {
 }
 
+// Destructor
 Rotate::~Rotate() {
 }
 
+// Get a list of files in a directory that match a pattern
 std::vector<std::wstring> Rotate::getFilesInDirectory(const std::wstring directory, const std::wstring pattern, bool returnFullPath) {
     std::vector<std::wstring> files;
     std::wregex re(pattern);
@@ -49,6 +52,7 @@ std::vector<std::wstring> Rotate::getFilesInDirectory(const std::wstring directo
     return files;
 }
 
+// Get the age of a file in seconds
 long long Rotate::getFileAgeInSeconds(const std::wstring filename) {
     std::filesystem::path file_path(filename);
     auto last_write_time = std::filesystem::last_write_time(file_path);
@@ -58,12 +62,18 @@ long long Rotate::getFileAgeInSeconds(const std::wstring filename) {
     return static_cast<int>(std::chrono::duration_cast<std::chrono::seconds>(duration).count());
 }
 
+// Rotate a file based on a configuration
 int Rotate::rotateFile(Config::Section& config) {
+    // Initialize the total number of renames
     int renamesTotal = 0;
     try {
+        // Get a list of files to process
         std::vector<std::wstring> files2process = getFilesInDirectory(config.entries[L"Directory"], config.entries[L"FilePattern"], true);
+        // Process each file
         for (auto& file2process : files2process) {
+            // Initialize the number of renames for this file
             int renames = 0;
+            // If the file is too young to rotate, skip it
             if (getFileAgeInSeconds(file2process) < std::stoi(config.entries[L"MinAge"])) {
                 if(config.entries[L"Simulation"] == L"true") {
 					Logging::info(L"File " + file2process + L" is too young to rotate. Skipping.");
@@ -97,11 +107,13 @@ int Rotate::rotateFile(Config::Section& config) {
                 }
             }
             files.push_back(file2process);
+            // If the file is old enough to rotate
             if (files.size() > 0) {
                 std::wstring pattern = L"^(.+)\\.(\\d+)$";
                 std::wregex re(pattern);
 
                 std::wstring new_file(L"");
+                // For each file
                 for (auto& file : files) {
                     std::wsmatch match;
                     auto matched = std::regex_match(file, match, re);
@@ -125,6 +137,7 @@ int Rotate::rotateFile(Config::Section& config) {
                         }
                         return 1;
                     }
+                    // If the file is the original file
                     if (file == file2process) {
                         if (std::stoi(config.entries[L"KeepFiles"]) == -1) {
                             if (config.entries[L"Simulation"] != L"true") {
@@ -149,6 +162,7 @@ int Rotate::rotateFile(Config::Section& config) {
 							}
                         }
                     }
+                    // If the file is not the original file
                     else {
                         if (config.entries[L"Simulation"] != L"true") {
 							std::filesystem::rename(file, new_file);
@@ -158,6 +172,7 @@ int Rotate::rotateFile(Config::Section& config) {
                             Logging::info(L"Simulated rename of " + file + L" to " + new_file);
                         }
                     }
+                    // Increment the number of renames
                     renames++;
                 }
             }
@@ -178,18 +193,27 @@ int Rotate::rotateFile(Config::Section& config) {
     return renamesTotal;
 }
 
+// Rotate files based on a configuration
 void Rotate::doRotates(std::pair<std::wstring, Config::Section>* config) {
+    // Log that we have entered the doRotates function
     Logging::debug(L"Entered doRotates");
     try {
+        // If it is time to rotate
         if (config->second.crontab.isTimeToRotate()) {
+            // Rotate the file
             rotateFile(config->second);
         }
     }
+    // Catch any filesystem errors
     catch (std::filesystem::filesystem_error& e) {
+        // Log the error
         Logging::error(L"Filesystem error: " + Tools::stringToWstring(e.what()));
     }
+    // Catch any other exceptions
     catch (...) {
+        // Log the error
         Logging::error(L"Unknown exception in doRotates");
     }
+    // Log that we are leaving the doRotates function
     Logging::debug(L"Leaving doRotates");
 }

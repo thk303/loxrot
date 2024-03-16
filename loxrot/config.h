@@ -27,27 +27,71 @@
 #include <string>
 #include <map>
 
+/**
+ * \class Config
+ * \brief A class to handle configuration.
+ */
 class Config
 {
 public:
-	Config();
-	~Config();
+    /**
+     * \brief Default constructor for Config.
+     */
+    Config();
 
-	class Section {
-	public:
-		Section() {};
-		~Section() {};
-		std::map<std::wstring, std::wstring> entries;
-		Crontab crontab;
-	};
+    /**
+     * \brief Destructor for Config.
+     */
+    ~Config();
 
-	void load(const std::wstring& configfile);
-	const std::map<std::wstring, std::wstring>& getSection(const std::wstring& section);
-	std::map<std::wstring, Config::Section>& getConfigs();
+    /**
+     * \class Section
+     * \brief A class to handle a section of the configuration.
+     */
+    class Section {
+    public:
+        /**
+         * \brief Default constructor for Section.
+         */
+        Section() {};
+
+        /**
+         * \brief Destructor for Section.
+         */
+        ~Section() {};
+
+        std::map<std::wstring, std::wstring> entries; ///< Map of entries in the section.
+        Crontab crontab; ///< Crontab for the section.
+    };
+
+    /**
+     * \brief Load configuration from a file.
+     * \param configfile The path to the configuration file.
+     */
+    void load(const std::wstring& configfile);
+
+    /**
+     * \brief Get a section from the configuration.
+     * \param section The name of the section.
+     * \return A map of entries in the section.
+     */
+    const std::map<std::wstring, std::wstring>& getSection(const std::wstring& section);
+
+    /**
+     * \brief Get all configurations.
+     * \return A map of all configurations.
+     */
+    std::map<std::wstring, Config::Section>& getConfigs();
 
 private:
-	int convertToSeconds(const std::wstring& duration);
-	std::map<std::wstring, Section> configs;
-	std::wstring configfile;
+    /**
+     * \brief Convert a duration string to seconds.
+     * \param duration The duration string.
+     * \return The duration in seconds.
+     */
+    int convertToSeconds(const std::wstring& duration);
+
+    std::map<std::wstring, Section> configs; ///< Map of all configurations.
+    std::wstring configfile; ///< The path to the configuration file.
 };
 

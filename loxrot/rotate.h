@@ -29,15 +29,51 @@
 #include "config.h"
 
 // The rotation functionality
+/**
+ * \class Rotate
+ * \brief A class to handle file rotation.
+ */
 class Rotate
 {
 public:
-	Rotate();
-	~Rotate();
-	void doRotates(std::pair<std::wstring, Config::Section>* config);
+    /**
+     * \brief Default constructor for Rotate.
+     */
+    Rotate();
+
+    /**
+     * \brief Destructor for Rotate.
+     */
+    ~Rotate();
+
+    /**
+     * \brief Perform file rotations based on a configuration.
+     * \param config The configuration to use for rotations.
+     */
+    void doRotates(std::pair<std::wstring, Config::Section>* config);
+
 private:
-	std::vector<std::wstring> getFilesInDirectory(const std::wstring directory, const std::wstring pattern, bool returnFullPath = false);
-	long long getFileAgeInSeconds(const std::wstring filename);
-	int rotateFile(Config::Section& config);
+    /**
+     * \brief Get files in a directory that match a pattern.
+     * \param directory The directory to search.
+     * \param pattern The pattern to match.
+     * \param returnFullPath Whether to return the full path of the files.
+     * \return A vector of matching file names.
+     */
+    std::vector<std::wstring> getFilesInDirectory(const std::wstring directory, const std::wstring pattern, bool returnFullPath = false);
+
+    /**
+     * \brief Get the age of a file in seconds.
+     * \param filename The name of the file.
+     * \return The age of the file in seconds.
+     */
+    long long getFileAgeInSeconds(const std::wstring filename);
+
+    /**
+     * \brief Rotate a file based on a configuration.
+     * \param config The configuration to use for rotation.
+     * \return The status of the rotation.
+     */
+    int rotateFile(Config::Section& config);
 };
 

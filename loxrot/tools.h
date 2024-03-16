@@ -26,9 +26,26 @@
 #include <string>
 #include <windows.h>
 
+/**
+ * \class Tools
+ * \brief A class for utility functions.
+ */
 class Tools
 {
 	public:
+		/**
+   * \brief Convert a string to a wide string.
+   * \param str The string to convert.
+   * \param codepage The code page to use for the conversion. Default is CP_UTF8.
+   * \return The converted wide string.
+   */
 		static std::wstring stringToWstring(const std::string& str, int codepage = CP_UTF8);
+
+		/**
+   * \brief Convert a wide string to a string.
+   * \param wstr The wide string to convert.
+   * \param codepage The code page to use for the conversion. Default is CP_UTF8.
+   * \return The converted string.
+   */
 		static std::string wstringToString(const std::wstring& wstr, int codepage = CP_UTF8);
 };

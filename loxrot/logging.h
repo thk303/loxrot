@@ -28,33 +28,51 @@
 #include <iostream>
 #include <vector>
 #include <iomanip>
-//#include <windows.h>
 #include <sstream>
 
-// The logging class is a singleton.
+/**
+ * \class Logging
+ * \brief A singleton class for logging.
+ */
 class Logging {
 private:
+    /**
+     * \brief Private constructor for the singleton Logging class.
+     */
     Logging();
+
+    /**
+     * \brief Destructor for the Logging class.
+     */
     ~Logging();
 
+    /**
+     * \brief Log a message with a specific log level.
+     * \param loglevel_ The log level.
+     * \param message The message to log.
+     */
     void _log(int loglevel_, std::wstring message);
     void _log(int loglevel_, std::string message);
 
-    std::wofstream logstreamW;
-    std::ofstream logstream;
-    static Logging* instance;
-    static int loglevel;
-    static std::wstring filename;
-    static std::string syslogAddress;
-    static int syslogPort;
-    static std::string ownHostname;
-    static int ownPid;
-    std::vector<std::wstring> loglevelsW = { L"DEBUG", L"INFO", L"WARNING", L"ERROR", L"FATAL" };
-    std::vector<std::string> loglevels = { "DEBUG", "INFO", "WARNING", "ERROR", "FATAL" };
-    void sendToSyslogViaUDP(const std::string& message);
-    void sendToSyslogViaUDP(const std::wstring& message);
+    std::wofstream logstreamW; ///< Wide character log stream.
+    std::ofstream logstream; ///< Log stream.
+    static Logging* instance; ///< Singleton instance of the Logging class.
+    static int loglevel; ///< Current log level.
+    static std::wstring filename; ///< Log file name.
+    static std::string syslogAddress; ///< Syslog server address.
+    static int syslogPort; ///< Syslog server port.
+    static std::string ownHostname; ///< Hostname of this machine.
+    static int ownPid; ///< Process ID of this process.
+    std::vector<std::wstring> loglevelsW = { L"DEBUG", L"INFO", L"WARNING", L"ERROR", L"FATAL" }; ///< Log levels in wide characters.
+    std::vector<std::string> loglevels = { "DEBUG", "INFO", "WARNING", "ERROR", "FATAL" }; ///< Log levels.
+    void sendToSyslogViaUDP(const std::string& message); ///< Send a message to the syslog server via UDP.
+    void sendToSyslogViaUDP(const std::wstring& message); ///< Send a wide character message to the syslog server via UDP.
 
 public:
+    /**
+     * \struct LogLevel
+     * \brief Struct for log level constants.
+     */
     struct LogLevel {
         static const int none = -1;
         static const int debug = 0;
@@ -64,16 +82,27 @@ public:
         static const int fatal = 4;
     };
 
+    /**
+     * \brief Get the singleton instance of the Logging class.
+     * \return The singleton instance of the Logging class.
+     */
     static Logging* getInstance();
+
+    /**
+     * \brief Set the log options.
+     * \param level The log level.
+     * \param filename The log file name.
+     */
     static void setLogOptions(int level, const std::wstring& filename);
-    static void debug(std::wstring message);
-    static void debug(std::string message);
-    static void info(std::wstring message);
-    static void info(std::string message);
-    static void warning(std::wstring message);
-    static void warning(std::string message);
-    static void error(std::wstring message);
-    static void error(std::string message);
-    static void fatal(std::wstring message);
-    static void fatal(std::string message);
+
+    static void debug(std::wstring message); ///< Log a debug message.
+    static void debug(std::string message); ///< Log a debug message.
+    static void info(std::wstring message); ///< Log an info message.
+    static void info(std::string message); ///< Log an info message.
+    static void warning(std::wstring message); ///< Log a warning message.
+    static void warning(std::string message); ///< Log a warning message.
+    static void error(std::wstring message); ///< Log an error message.
+    static void error(std::string message); ///< Log an error message.
+    static void fatal(std::wstring message); ///< Log a fatal message.
+    static void fatal(std::string message); ///< Log a fatal message.
 };
