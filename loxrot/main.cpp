@@ -46,7 +46,7 @@ struct Args {
     int loglevel = Logging::LogLevel::none; // Log level
     std::wstring loglevelname = L"none"; // Log level name, used for installing the service
     bool service = false; // Flag to indicate if the program should run as a service
-    bool foreground = true; // Flag to indicate if the program should run in the foreground
+    bool foreground = false; // Flag to indicate if the program should run in the foreground
     bool installservice = false; // Flag to indicate if the service should be installed
     bool uninstallservice = false; // Flag to indicate if the service should be uninstalled
 };
@@ -59,7 +59,7 @@ bool parseArgs(int argc, wchar_t** argv, Args* args) {
     args->loglevel = Logging::LogLevel::info;
     // Populate the help text with usage instructions
     helptext << PROGRAMNAMEW << L" v" << VERSION << std::endl
-        << L"Usage: " + PROGRAMNAMEW + L" --config <configfile> [--foreground] [--logfile <logfile|:stdout>] [--loglevel <loglevel>] [--installservice|--uninstallservice]" << std::endl;
+        << L"Usage: " + PROGRAMNAMEW + L" --config <configfile> [--foreground] [--logfile <logfile|:stdout|syslog://<ip>:[<port>]] [--loglevel <loglevel>] [--installservice|--uninstallservice]" << std::endl;
     // If there are less than 2 command line arguments, print the help text
     if (argc < 2) {
         std::wcout << helptext.str() << std::endl;
