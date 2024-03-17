@@ -43,7 +43,7 @@ int Logging::ownPid = 0; // Process ID of the current process
 // Constructor
 Logging::Logging() {
     // If the log file name is "stdout" or empty, log to the console
-    if (filename == L"stdout" || filename.empty()) {
+    if (filename == L":stdout" || filename.empty()) {
         logstreamW = std::wofstream(L"CON");
         logstream = std::ofstream("CON");
         return;
