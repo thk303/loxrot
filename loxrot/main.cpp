@@ -154,6 +154,12 @@ bool parseArgs(int argc, wchar_t** argv, Args* args) {
             return false;
         }
     }
+    // Check for the existance of neccessary arguments
+    if (args->configfile == L"") {
+        std::wcout << L"Missing argument --config" << std::endl;
+        return false;
+    }
+
     // If all arguments were parsed successfully, return true
     return true;
 }
@@ -298,7 +304,7 @@ int wmain(int argc, wchar_t** argv) {
                     }
                     else {
                         // If the service was not created successfully, log an error
-                        Logging::error(L"CreateService failed");
+                        std::wcout << L"CreateService failed" << std::endl;
                     }
                     // Close the service control manager handle
                     CloseServiceHandle(schSCManager);

@@ -22,6 +22,7 @@
 	NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
 	OF SUCH DAMAGE.
 */
+
 #pragma once
 #include <chrono>
 #include <string>
@@ -68,6 +69,13 @@ private:
      * \return The age of the file in seconds.
      */
     long long getFileAgeInSeconds(const std::wstring filename);
+
+    /**
+     * \brief Set the creation time of the truncated file to now.
+     * \param filename The name of the file.
+     * \return void
+     */
+    void setCreationTime(const std::wstring& filename);
 
     /**
      * \brief Rotate a file based on a configuration.

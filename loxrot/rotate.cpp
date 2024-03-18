@@ -22,6 +22,7 @@
     NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
     OF SUCH DAMAGE.
 */
+
 #include "rotate.h"
 #include "logging.h"
 #include <filesystem>
@@ -54,12 +55,56 @@ std::vector<std::wstring> Rotate::getFilesInDirectory(const std::wstring directo
 
 // Get the age of a file in seconds
 long long Rotate::getFileAgeInSeconds(const std::wstring filename) {
-    std::filesystem::path file_path(filename);
-    auto last_write_time = std::filesystem::last_write_time(file_path);
-    auto now = std::chrono::system_clock::now();
-    auto sctp = std::chrono::time_point_cast<std::chrono::system_clock::duration>(last_write_time - std::filesystem::file_time_type::clock::now() + std::chrono::system_clock::now());
-    auto duration = now - sctp;
-    return static_cast<int>(std::chrono::duration_cast<std::chrono::seconds>(duration).count());
+	// Open the file
+	HANDLE hFile = CreateFileW(filename.c_str(), FILE_WRITE_ATTRIBUTES, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (hFile == INVALID_HANDLE_VALUE)
+		Logging::error(L"Could not open file " + filename + L" for getting creation time");
+
+    FILETIME ftFile;
+	// Get the creation time of the file
+	if (!GetFileTime(hFile, &ftFile, NULL, NULL)) {
+		CloseHandle(hFile);
+		Logging::error(L"Could not get creation time of " + filename);
+	}
+	CloseHandle(hFile);
+
+	// Get the current system time
+	FILETIME ftNow;
+	GetSystemTimeAsFileTime(&ftNow);
+
+	// Convert FILETIME in ULARGE_INTEGER
+	ULARGE_INTEGER creationULI, currentULI;
+	creationULI.LowPart = ftFile.dwLowDateTime;
+	creationULI.HighPart = ftFile.dwHighDateTime;
+	currentULI.LowPart = ftNow.dwLowDateTime;
+	currentULI.HighPart = ftNow.dwHighDateTime;
+
+	// Calculate the difference in intervals of 100 nanoseconds
+	ULONGLONG diff = currentULI.QuadPart - creationULI.QuadPart;
+
+	// Convert the difference to seconds
+	long long diffSeconds = diff / 10000000ULL;
+    return diffSeconds;
+}
+
+// Set the creation time of a file
+void Rotate::setCreationTime(const std::wstring& filename) {
+    // Open the file
+    HANDLE hFile = CreateFileW(filename.c_str(), FILE_WRITE_ATTRIBUTES, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (hFile == INVALID_HANDLE_VALUE)
+        Logging::error(L"Could not open file " + filename + L" for setting creation time");
+
+    // Get the current system time
+    FILETIME ft;
+    GetSystemTimeAsFileTime(&ft);
+
+    // Set the creation time of the file
+    if (!SetFileTime(hFile, &ft, NULL, NULL)) {
+        CloseHandle(hFile);
+        Logging::error(L"Could not set creation time of " + filename);
+    }
+    
+    CloseHandle(hFile);
 }
 
 // Rotate a file based on a configuration
@@ -155,6 +200,8 @@ int Rotate::rotateFile(Config::Section& config) {
                                 }
                                 std::ofstream ofs(file, std::ios::trunc);
                                 ofs.close();
+                                // Set the creation time of the truncated file to now
+                                setCreationTime(file);
                                 Logging::info(L"Truncated " + file2process);
                             }
                             else {
