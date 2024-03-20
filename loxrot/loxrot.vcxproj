@@ -259,7 +259,6 @@
     <None Include="..\LICENSE" />
     <None Include="..\README" />
     <None Include="loxrot.conf" />
-    <None Include="reinstall_service.bat" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="config.h" />
