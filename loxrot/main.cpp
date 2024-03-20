@@ -22,6 +22,7 @@
     NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY 
     OF SUCH DAMAGE.
 */
+
 #include "logging.h"
 #include "config.h"
 #include "rotate.h"
@@ -155,7 +156,7 @@ bool parseArgs(int argc, wchar_t** argv, Args* args) {
         }
     }
     // Check for the existance of neccessary arguments
-    if (args->configfile == L"") {
+    if (args->configfile == L"" && args->uninstallservice == false) {
         std::wcout << L"Missing argument --config" << std::endl;
         return false;
     }

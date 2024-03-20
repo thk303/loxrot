@@ -63,15 +63,17 @@ int Config::convertToSeconds(const std::wstring& duration) {
 
         switch (unit) {
         case L'm': // Minutes
-            return std::chrono::minutes(value).count() * 60;
+            return value * 60;
         case L'h': // Hours
-            return std::chrono::hours(value).count() * 60 * 60;
+            return value * 60 * 60;
         case L'd': // Days
-            return std::chrono::duration<int, std::ratio<24 * 60 * 60>>(value).count();
+            return value * 60 * 60 * 24;
+        case L'w': // Weeks
+            return value * 60 * 60 * 24 * 7;
         case L'M': // Months (30 days)
-            return std::chrono::duration<int, std::ratio<30 * 24 * 60 * 60>>(value).count();
+            return value * 60 * 60 * 24 * 30;
         case L'y': // Years (365 days)
-            return std::chrono::duration<double, std::ratio<60 * 60 * 24 * 365>>(value).count();
+            return value * 60 * 60 * 24 * 365;
         default:
             throw std::invalid_argument("Invalid unit in the age string in the config. Only 'm', 'h, 'd', 'M' or 'y' allowed.");
         }
