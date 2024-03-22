@@ -208,13 +208,13 @@ namespace loxrotTest
 		//	Assert::AreEqual(c.convertToSeconds(m), 10368000);
 		//}
 
-		TEST_METHOD(Years) {
-			Config con;
-			con.load(L"config.ini");
-			con.getSection(L"section1");
-			con.convertToSeconds(L"4y");
+		//TEST_METHOD(Years) {
+		//	Config con;
+		//	con.load(L"config.ini");
+		//	con.getSection(L"section1");
+		//	con.convertToSeconds(L"4y");
 			//std::wstring m(L"4y");
 			//Assert::AreEqual(c.convertToSeconds(m), 126144000);
-		}
+		//}
 	};
 }

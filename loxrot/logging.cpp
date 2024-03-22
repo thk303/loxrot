@@ -157,8 +157,7 @@ void Logging::sendToSyslogViaUDP(const std::string& message) {
         return;
     }
 
-    if (sendto(sockfd, message.c_str(), message.size(), 0,
-        (SOCKADDR*)&servaddr, sizeof(servaddr)) == SOCKET_ERROR) {
+    if (sendto(sockfd, message.c_str(), static_cast<int>(message.size()), 0,(SOCKADDR*)&servaddr, sizeof(servaddr)) == SOCKET_ERROR) {
     }
 
     closesocket(sockfd);
