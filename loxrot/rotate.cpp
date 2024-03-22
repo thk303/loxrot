@@ -238,7 +238,7 @@ int Rotate::rotateFile(Config::Section& config) {
                         if (config.entries[L"Simulation"] != L"true") {
 							std::filesystem::rename(file, new_file);
                             Logging::debug(L"Renamed " + file + L"to " + new_file);
-                            if(std::stoi(config.entries[L"FirstCompress"]) > suffix) {
+                            if(std::stoi(config.entries[L"FirstCompress"]) >= suffix) {
                                 if (compressFile(new_file)) {
 									Logging::info(L"Compressed " + new_file);
                                     std::filesystem::remove(new_file);
