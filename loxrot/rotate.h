@@ -64,6 +64,13 @@ private:
     std::vector<std::wstring> getFilesInDirectory(const std::wstring directory, const std::wstring pattern, bool returnFullPath = false);
 
     /**
+     * \brief Compresses a file with zlib.
+     * \param filename The filename to be compressed. The orifinal file will not be deleted.
+     * \return true or false
+     */
+    bool compressFile(const std::wstring& filename);
+
+    /**
      * \brief Get the age of a file in seconds.
      * \param filename The name of the file.
      * \return The age of the file in seconds.

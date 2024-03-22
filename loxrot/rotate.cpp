@@ -33,6 +33,7 @@
 #include <regex>
 #include <windows.h>
 #include "tools.h"
+#include <zlib.h>
 
 // Constructor
 Rotate::Rotate() {
@@ -41,6 +42,27 @@ Rotate::Rotate() {
 // Destructor
 Rotate::~Rotate() {
 }
+
+bool Rotate::compressFile(const std::wstring& filename) {
+	std::ifstream ifs(filename, std::ios::binary);
+	std::ofstream ofs(filename + L".gz", std::ios::binary);
+    gzFile gz = gzopen_w(filename.c_str(), "wb");
+    if (!gz) {
+		Logging::error(L"Could not open " + filename + L".gz for writing");
+        ifs.close();
+        return false;
+	}
+	char buffer[1024];
+	while (ifs.read(buffer, sizeof(buffer))) {
+		gzwrite(gz, buffer, sizeof(buffer));
+	}
+	gzwrite(gz, buffer, static_cast<int>(ifs.gcount()));
+	gzclose(gz);
+	ifs.close();
+	ofs.close();
+    return true;
+}
+
 
 // Get a list of files in a directory that match a pattern
 std::vector<std::wstring> Rotate::getFilesInDirectory(const std::wstring directory, const std::wstring pattern, bool returnFullPath) {
@@ -156,6 +178,7 @@ int Rotate::rotateFile(Config::Section& config) {
             if (files.size() > 0) {
                 std::wstring pattern = L"^(.+)\\.(\\d+)$";
                 std::wregex re(pattern);
+                int suffix(0);
 
                 std::wstring new_file(L"");
                 // For each file
@@ -164,11 +187,12 @@ int Rotate::rotateFile(Config::Section& config) {
                     auto matched = std::regex_match(file, match, re);
                     if (matched) {
                         std::wstring base = match[1].str();
-                        int number = match[2].matched ? std::stoi(match[2].str()) + 1 : 0;
+                        suffix = match[2].matched ? std::stoi(match[2].str()) + 1 : 0;
 
-                        new_file = base + L"." + std::to_wstring(number);
+                        new_file = base + L"." + std::to_wstring(suffix);
                     }
                     else {
+                        suffix = 0;
                         new_file = file + L".0";
                     }
 
@@ -214,6 +238,15 @@ int Rotate::rotateFile(Config::Section& config) {
                         if (config.entries[L"Simulation"] != L"true") {
 							std::filesystem::rename(file, new_file);
                             Logging::debug(L"Renamed " + file + L"to " + new_file);
+                            if(std::stoi(config.entries[L"FirstCompress"]) > suffix) {
+                                if (compressFile(new_file)) {
+									Logging::info(L"Compressed " + new_file);
+                                    std::filesystem::remove(new_file);
+								}
+                                else {
+                                    Logging::error(L"Could not compress " + new_file);
+                                }
+							}
                         }
                         else {
                             Logging::info(L"Simulated rename of " + file + L" to " + new_file);
