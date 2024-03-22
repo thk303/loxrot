@@ -55,8 +55,9 @@ public:
      * \return True if it's time to rotate, false otherwise.
      */
     bool isTimeToRotate();
-
+#ifndef UNITTEST
 private:
+#endif
     tm last; ///< The last time the crontab was checked.
     std::wstring crontabstring; ///< The crontab string.
     std::vector<int> minutes; ///< The minutes field of the crontab.

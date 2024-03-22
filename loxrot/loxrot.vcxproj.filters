@@ -38,6 +38,7 @@
     <None Include="loxrot.conf" />
     <None Include="..\LICENSE" />
     <None Include="..\README" />
+    <None Include="set_dev_version.bat" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="crontab.h">

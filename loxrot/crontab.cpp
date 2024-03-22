@@ -28,6 +28,7 @@
 #include <iostream>
 #include <windows.h>
 #include "logging.h"
+#include <regex>
 
 Crontab::Crontab()
 {
@@ -78,11 +79,26 @@ bool Crontab::isTimeToRotate()
 
 bool Crontab::parse(const std::wstring& crontabstring)
 {
-	// Parse the crontab string
-	std::wstringstream ss(crontabstring);
+	// Clear the vectors
+	minutes.clear();
+	hours.clear();
+	days.clear();
+	months.clear();
+	weekdays.clear();
+	 
+	// trim the string
+	std::wstring::size_type start = crontabstring.find_first_not_of(L" ");
+	std::wstring::size_type end = crontabstring.find_last_not_of(L" ");
+	std::wstring trimmed = crontabstring.substr(start, end - start + 1);
+
+	// split the string
+	std::wstringstream ss(trimmed);
 	std::vector<std::vector<int>*> fields = {&minutes, &hours, &days, &months, &weekdays};
+
+	// parse the string
     int vecnum(0);
 	std::wstring token;
+	std::wsmatch match;
 	while (getline(ss, token, L' ')) {
 		if (token == L"*") {
 			if (vecnum == 0) { // min
@@ -100,8 +116,8 @@ bool Crontab::parse(const std::wstring& crontabstring)
 					fields[vecnum]->push_back(i);
 				}
 			}
-			else if (vecnum == 3) { // month
-				for (int i = 1; i < 13; i++) {
+			else if (vecnum == 3) { // month 0-11
+				for (int i = 0; i < 12; i++) {
 					fields[vecnum]->push_back(i);
 				}
 			}
@@ -112,65 +128,196 @@ bool Crontab::parse(const std::wstring& crontabstring)
 			}
 		}
 		else if (token.find(L',') != std::wstring::npos) {
+			if (!std::regex_match(token, std::wregex(L"(\\d+,\\d+)(,\\d+)*"))) {
+				return false;
+			}
 			std::wstringstream ss2(token);
 			std::wstring token2;
 			while (std::getline(ss2, token2, L',')) {
+				if (token2.length() == 0) {
+					return false;
+				}
+				if (vecnum == 0) { // min
+					if (std::stoi(token2) < 0 || std::stoi(token2) > 59) {
+						return false;
+					}
+				}
+				else if (vecnum == 1) { // hour
+					if (std::stoi(token2) < 0 || std::stoi(token2) > 23) {
+						return false;
+					}
+				}
+				else if (vecnum == 2) { // day
+					if (std::stoi(token2) < 1 || std::stoi(token2) > 31) {
+						return false;
+					}
+				}
+				else if (vecnum == 3) { // month 0-11
+					if (std::stoi(token2) < 0 || std::stoi(token2) > 11) {
+						return false;
+					}
+				}
+				else if (vecnum == 4) { // weekday
+					if (std::stoi(token2) < 0 || std::stoi(token2) > 6) {
+						return false;
+					}
+				}
 				fields[vecnum]->push_back(std::stoi(token2));
 			}
 		}
 		else if (token.find(L"-") != std::wstring::npos) {
-			std::wstringstream ss2(token);
-			std::wstring token2;
-			while (std::getline(ss2, token2, L'-')) {
-				int start = std::stoi(token2);
-				std::getline(ss2, token2, L'-');
-				int end = std::stoi(token2);
-				for (int i = start; i <= end; i++) {
-					fields[vecnum]->push_back(i);
+			if (!std::regex_match(token, match, std::wregex(L"(\\d+)-(\\d+)"))) {
+				return false;
+			}
+			int start(std::stoi(match[1]));
+			end = std::stoi(match[2]);
+			if (vecnum == 0) { // min
+				if (start < 0 || start > 59 || end < 0 || end > 59) {
+					return false;
 				}
+			}
+			else if (vecnum == 1) { // hour
+				if (start < 0 || start > 23 || end < 0 || end > 23) {
+					return false;
+				}
+			}
+			else if (vecnum == 2) { // day
+				if (start < 1 || start > 31 || end < 1 || end > 31) {
+					return false;
+				}
+			}
+			else if (vecnum == 3) { // month 0-11
+				if (start < 0 || start > 11 || end < 0 || end > 11) {
+					return false;
+				}
+			}
+			else if (vecnum == 4) { // weekday
+				if (start < 0 || start > 6 || end < 0 || end > 6) {
+					return false;
+				}
+			}
+			for (int i = start; i <= end; i++) {
+				fields[vecnum]->push_back(i);
 			}
 		}
 		else if (token.find(L'/') != std::wstring::npos) {
-			std::wstringstream ss2(token);
-			std::wstring token2;
-			std::getline(ss2, token2, L'/');
-			if (token2 == L"*") {
-				token2 = L"0";
+			if (!std::regex_match(token, match, std::wregex(L"(\\d+|\\*+)\\/(\\d+)"))) {
+				return false;
 			}
-			int start = std::stoi(token2);
-			std::getline(ss2, token2, L'/');
-			int step = std::stoi(token2);
-			if (vecnum == 0) {
+
+			int start;
+			if (match[1] == L"*") {
+				if (vecnum == 2) {	// days start at 1
+					start = 1;
+				}
+				else {				// rest starts at 0
+					start = 0;
+				}
+			}
+			else {
+				start = std::stoi(match[1]);
+			}
+
+			int step = std::stoi(match[2]);
+			if (step <= 0) {
+				return false;
+			}
+			if (vecnum == 0) {	// minutes
+				if (start < 0 || start > 59) {
+					return false;
+				}
 				for (int i = start; i < 60; i += step) {
 					fields[vecnum]->push_back(i);
 				}
 			}
-			else if (vecnum == 1) {
+			else if (vecnum == 1) {	// hours
+				if (start < 0 || start > 23) {
+					return false;
+				}
 				for (int i = start; i < 24; i += step) {
 					fields[vecnum]->push_back(i);
 				}
 			}
-			else if (vecnum == 2) {
+			else if (vecnum == 2) {	// days
+				if (start < 1 || start > 31) {
+					return false;
+				}
 				for (int i = start; i < 32; i += step) {
 					fields[vecnum]->push_back(i);
 				}
 			}
-			else if (vecnum == 3) {
-				for (int i = start; i < 13; i += step) {
+			else if (vecnum == 3) {	// months
+				if (start < 0 || start > 11) {
+					return false;
+				}
+				for (int i = start; i < 12; i += step) {
 					fields[vecnum]->push_back(i);
 				}
 			}
-			else if (vecnum == 4) {
+			else if (vecnum == 4) {	// weekdays
+				if (start < 0 || start > 6) {
+					return false;
+				}
 				for (int i = start; i < 7; i += step) {
 					fields[vecnum]->push_back(i);
 				}
 			}
 		}
-		else {
+		else if (token == L"") {
+			continue;
+		}
+		else if(std::regex_match(token, std::wregex(L"\\d+"))) {
+			if (vecnum == 0) {
+				if (std::stoi(token) < 0 || std::stoi(token) > 59) {
+					return false;
+				}
+			}
+			else if (vecnum == 1) {
+				if (std::stoi(token) < 0 || std::stoi(token) > 23) {
+					return false;
+				}
+			}
+			else if (vecnum == 2) {
+				if (std::stoi(token) < 1 || std::stoi(token) > 31) {
+					return false;
+				}
+			}
+			else if (vecnum == 3) {
+				if (std::stoi(token) < 0 || std::stoi(token) > 11) {
+					return false;
+				}
+			}
+			else if (vecnum == 4) {
+				if (std::stoi(token) < 0 || std::stoi(token) > 6) {
+					return false;
+				}
+			}
 			fields[vecnum]->push_back(std::stoi(token));
 		}
+		else
+			return false;
 		vecnum++;
     }
-	// TODO: check if the crontab string is valid and return false if not or use exceptions
-    return true;
+
+	if (vecnum != 5) {
+		return false;
+	}
+
+	// Check if all fields are set
+	if (minutes.empty()) {
+		return false;
+	}
+	if (hours.empty()) {
+		return false;
+	}
+	if (days.empty()) {
+		return false;
+	}
+	if (months.empty()) {
+		return false;
+	}
+	if (weekdays.empty()) {
+		return false;
+	}
+	return true;
 }

@@ -83,7 +83,9 @@ public:
      */
     std::map<std::wstring, Config::Section>& getConfigs();
 
+#ifndef UNITTEST
 private:
+#endif
     /**
      * \brief Convert a duration string to seconds.
      * \param duration The duration string.

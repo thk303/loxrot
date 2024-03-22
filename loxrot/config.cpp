@@ -54,7 +54,7 @@ std::map<std::wstring, Config::Section>& Config::getConfigs()
 
 // Converts a duration string to seconds
 int Config::convertToSeconds(const std::wstring& duration) {
-    std::wregex re(L"(\\d+)([mhdMy])");
+    std::wregex re(L"(\\d+)([mhdwMy])");
     std::wsmatch match;
 
     if (std::regex_match(duration, match, re)) {
@@ -132,7 +132,7 @@ void Config::load(const std::wstring& configfile)
                     try {
 						value = std::to_wstring(convertToSeconds(value));
 					}
-					catch (std::invalid_argument& e) {
+					catch (std::invalid_argument&) {
 						std::wstring msg = L"Invalid value of " + key + L" in section " + section + L" in config file " + configfile;
                         Logging::fatal(msg + L". Aborting program.");
                         throw std::runtime_error(std::string(msg.begin(), msg.end()));
