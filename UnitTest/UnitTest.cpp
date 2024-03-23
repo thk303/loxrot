@@ -2,7 +2,15 @@
 #include "CppUnitTest.h"
 #include "../loxrot/crontab.h"
 #include "../loxrot/config.h"
+#include "../loxrot/rotate.h"
+//#include "../loxrot/config.h"
+
 #include <iostream>
+
+#include <windows.h>
+#include <fstream>
+#include <filesystem>
+#include <string>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -216,5 +224,45 @@ namespace loxrotTest
 			//std::wstring m(L"4y");
 			//Assert::AreEqual(c.convertToSeconds(m), 126144000);
 		//}
+	};
+
+	TEST_CLASS(Program) {
+	public:
+		TEST_METHOD(General) {
+			const std::wstring path(L"D:\\Code\\loxrot\\x64\\Debug\\test\\");
+			std::filesystem::create_directory(path);
+
+			std::wstring configContent(L"[Programname]\n"
+				L"Directory = " + path + L"\n"
+				L"FilePattern = ^.*\\.log$\n"
+				L"KeepFiles = 4\n"
+				L"Timer = * * * * *\n"
+				L"MinAge = 1d\n"
+				L"FirstCompress = 2\n"
+				L"Simulation = false\n");
+			std::wofstream out(std::wstring(path + L"config.conf"));
+			out << configContent;
+			out.close();
+
+			HANDLE h = CreateFile(std::wstring(path + L"test.log").c_str(), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+			WriteFile(h, "test", 4, NULL, NULL);
+			SYSTEMTIME st;
+			GetLocalTime(&st);
+			st.wDay -= 2;
+			FILETIME ft;
+			SystemTimeToFileTime(&st, &ft);
+			SetFileTime(h, &ft, 0, 0);
+			CloseHandle(h);
+
+			Config config;
+			config.load(std::wstring(path + L"config.conf"));
+
+			Rotate rotate;
+			for (std::map<std::wstring, Config::Section>::iterator it = config.getConfigs().begin(); it != config.getConfigs().end(); it++) {
+				// Perform log rotation
+				rotate.doRotates((std::pair<std::wstring, Config::Section>*)(&(*it)));
+			}
+
+		}
 	};
 }

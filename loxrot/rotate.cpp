@@ -45,21 +45,22 @@ Rotate::~Rotate() {
 
 bool Rotate::compressFile(const std::wstring& filename) {
 	std::ifstream ifs(filename, std::ios::binary);
-	std::ofstream ofs(filename + L".gz", std::ios::binary);
-    gzFile gz = gzopen_w(filename.c_str(), "wb");
+	//std::ofstream ofs(filename + L".gz", std::ios::binary);
+    gzFile gz = gzopen_w(std::wstring(filename + L".gz").c_str(), "wb");
     if (!gz) {
 		Logging::error(L"Could not open " + filename + L".gz for writing");
         ifs.close();
         return false;
 	}
-	char buffer[1024];
-	while (ifs.read(buffer, sizeof(buffer))) {
-		gzwrite(gz, buffer, sizeof(buffer));
-	}
-	gzwrite(gz, buffer, static_cast<int>(ifs.gcount()));
+	std::vector<char> buffer;
+    ifs.seekg(0, std::ios::end);
+    buffer.resize(ifs.tellg());
+    ifs.seekg(0);
+    ifs.read(buffer.data(), buffer.size());
+	gzwrite(gz, buffer.data(), buffer.size());
 	gzclose(gz);
 	ifs.close();
-	ofs.close();
+	//ofs.close();
     return true;
 }
 
@@ -69,8 +70,9 @@ std::vector<std::wstring> Rotate::getFilesInDirectory(const std::wstring directo
     std::vector<std::wstring> files;
     std::wregex re(pattern);
     for (const auto& entry : std::filesystem::directory_iterator(directory)) {
-        if (entry.is_regular_file() && std::regex_match(entry.path().filename().wstring(), re))
+        if (entry.is_regular_file() && std::regex_match(entry.path().filename().wstring(), re)) {
             files.push_back(returnFullPath ? entry.path().wstring() : entry.path().filename().wstring());
+        }
     }
     return files;
 }
@@ -154,6 +156,9 @@ int Rotate::rotateFile(Config::Section& config) {
                 if (std::filesystem::exists(file2process + L"." + std::to_wstring(appendix))) {
                     files.push_back(file2process + L"." + std::to_wstring(appendix));
                 }
+                else if (std::filesystem::exists(file2process + L"." + std::to_wstring(appendix) + L".gz")) {
+                    files.push_back(file2process + L"." + std::to_wstring(appendix) + L".gz");
+                }
                 else
                     break;
                 appendix++;
@@ -176,20 +181,23 @@ int Rotate::rotateFile(Config::Section& config) {
             files.push_back(file2process);
             // If the file is old enough to rotate
             if (files.size() > 0) {
-                std::wstring pattern = L"^(.+)\\.(\\d+)$";
-                std::wregex re(pattern);
                 int suffix(0);
 
                 std::wstring new_file(L"");
                 // For each file
                 for (auto& file : files) {
                     std::wsmatch match;
-                    auto matched = std::regex_match(file, match, re);
-                    if (matched) {
+                    if (std::regex_match(file, match, std::wregex(L"^(.+)\\.(\\d+)$"))) {
                         std::wstring base = match[1].str();
                         suffix = match[2].matched ? std::stoi(match[2].str()) + 1 : 0;
 
                         new_file = base + L"." + std::to_wstring(suffix);
+                    }
+                    else if (std::regex_match(file, match, std::wregex(L"^(.+)\\.(\\d+\\.gz)$"))) {
+                        std::wstring base = match[1].str();
+                        suffix = match[2].matched ? std::stoi(match[2].str()) + 1 : 0;
+
+                        new_file = base + L"." + std::to_wstring(suffix) + L".gz";
                     }
                     else {
                         suffix = 0;
@@ -238,7 +246,7 @@ int Rotate::rotateFile(Config::Section& config) {
                         if (config.entries[L"Simulation"] != L"true") {
 							std::filesystem::rename(file, new_file);
                             Logging::debug(L"Renamed " + file + L"to " + new_file);
-                            if(std::stoi(config.entries[L"FirstCompress"]) >= suffix) {
+                            if ((suffix >= std::stoi(config.entries[L"FirstCompress"])) && (new_file.rfind(L".gz") != (new_file.length() - 3))) {
                                 if (compressFile(new_file)) {
 									Logging::info(L"Compressed " + new_file);
                                     std::filesystem::remove(new_file);
