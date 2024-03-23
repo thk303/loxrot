@@ -45,22 +45,20 @@ Rotate::~Rotate() {
 
 bool Rotate::compressFile(const std::wstring& filename) {
 	std::ifstream ifs(filename, std::ios::binary);
-	//std::ofstream ofs(filename + L".gz", std::ios::binary);
     gzFile gz = gzopen_w(std::wstring(filename + L".gz").c_str(), "wb");
     if (!gz) {
 		Logging::error(L"Could not open " + filename + L".gz for writing");
         ifs.close();
         return false;
 	}
-	std::vector<char> buffer;
-    ifs.seekg(0, std::ios::end);
-    buffer.resize(ifs.tellg());
-    ifs.seekg(0);
-    ifs.read(buffer.data(), buffer.size());
-	gzwrite(gz, buffer.data(), buffer.size());
+    const int bufsize = 1024;
+    char buffer[bufsize];
+    memset(buffer, 0, bufsize);
+    while (ifs.read(buffer, bufsize)) {
+		gzwrite(gz, buffer, ifs.gcount());
+    }
 	gzclose(gz);
 	ifs.close();
-	//ofs.close();
     return true;
 }
 
