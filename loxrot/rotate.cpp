@@ -33,7 +33,9 @@
 #include <regex>
 #include <windows.h>
 #include "tools.h"
+#ifdef WITH_ZLIB
 #include <zlib.h>
+#endif
 
 // Constructor
 Rotate::Rotate() {
@@ -43,6 +45,7 @@ Rotate::Rotate() {
 Rotate::~Rotate() {
 }
 
+#ifdef WITH_ZLIB
 bool Rotate::compressFile(const std::wstring& filename) {
 	std::ifstream ifs(filename, std::ios::binary);
     gzFile gz = gzopen_w(std::wstring(filename + L".gz").c_str(), "wb");
@@ -55,13 +58,13 @@ bool Rotate::compressFile(const std::wstring& filename) {
     char buffer[bufsize];
     memset(buffer, 0, bufsize);
     while (ifs.read(buffer, bufsize)) {
-		gzwrite(gz, buffer, ifs.gcount());
+        gzwrite(gz, buffer, static_cast<int>(ifs.gcount()));
     }
 	gzclose(gz);
 	ifs.close();
     return true;
 }
-
+#endif
 
 // Get a list of files in a directory that match a pattern
 std::vector<std::wstring> Rotate::getFilesInDirectory(const std::wstring directory, const std::wstring pattern, bool returnFullPath) {
@@ -154,9 +157,11 @@ int Rotate::rotateFile(Config::Section& config) {
                 if (std::filesystem::exists(file2process + L"." + std::to_wstring(appendix))) {
                     files.push_back(file2process + L"." + std::to_wstring(appendix));
                 }
+#if WITH_ZLIB
                 else if (std::filesystem::exists(file2process + L"." + std::to_wstring(appendix) + L".gz")) {
                     files.push_back(file2process + L"." + std::to_wstring(appendix) + L".gz");
                 }
+#endif
                 else
                     break;
                 appendix++;
@@ -191,12 +196,14 @@ int Rotate::rotateFile(Config::Section& config) {
 
                         new_file = base + L"." + std::to_wstring(suffix);
                     }
+#if WITH_ZLIB
                     else if (std::regex_match(file, match, std::wregex(L"^(.+)\\.(\\d+\\.gz)$"))) {
                         std::wstring base = match[1].str();
                         suffix = match[2].matched ? std::stoi(match[2].str()) + 1 : 0;
 
                         new_file = base + L"." + std::to_wstring(suffix) + L".gz";
                     }
+#endif
                     else {
                         suffix = 0;
                         new_file = file + L".0";
@@ -244,6 +251,7 @@ int Rotate::rotateFile(Config::Section& config) {
                         if (config.entries[L"Simulation"] != L"true") {
 							std::filesystem::rename(file, new_file);
                             Logging::debug(L"Renamed " + file + L"to " + new_file);
+#ifdef WITH_ZLIB
                             if ((suffix >= std::stoi(config.entries[L"FirstCompress"])) && (new_file.rfind(L".gz") != (new_file.length() - 3))) {
                                 if (compressFile(new_file)) {
 									Logging::info(L"Compressed " + new_file);
@@ -253,6 +261,7 @@ int Rotate::rotateFile(Config::Section& config) {
                                     Logging::error(L"Could not compress " + new_file);
                                 }
 							}
+#endif
                         }
                         else {
                             Logging::info(L"Simulated rename of " + file + L" to " + new_file);

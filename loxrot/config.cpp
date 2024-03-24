@@ -172,9 +172,11 @@ void Config::load(const std::wstring& configfile)
         if (it->second.entries.find(L"MinAge") == it->second.entries.end()) {
             it->second.entries[L"MinAge"] = L"0m";
         }
+#ifdef WITH_ZLIB
         if (it->second.entries.find(L"FirstCompress") == it->second.entries.end()) {
             it->second.entries[L"FirstCompress"] = L"-1";
         }
+#endif
 	}
     // Log that the configuration parsing has finished
     Logging::debug(L"Leaving parseConfig");

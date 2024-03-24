@@ -238,7 +238,9 @@ namespace loxrotTest
 				L"KeepFiles = 4\n"
 				L"Timer = * * * * *\n"
 				L"MinAge = 1d\n"
+#ifdef WITH_ZLIB
 				L"FirstCompress = 2\n"
+#endif
 				L"Simulation = false\n");
 			std::wofstream out(std::wstring(path + L"config.conf"));
 			out << configContent;

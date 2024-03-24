@@ -62,14 +62,14 @@ private:
      * \return A vector of matching file names.
      */
     std::vector<std::wstring> getFilesInDirectory(const std::wstring directory, const std::wstring pattern, bool returnFullPath = false);
-
+#ifdef WITH_ZLIB
     /**
      * \brief Compresses a file with zlib.
      * \param filename The filename to be compressed. The orifinal file will not be deleted.
      * \return true or false
      */
     bool compressFile(const std::wstring& filename);
-
+#endif
     /**
      * \brief Get the age of a file in seconds.
      * \param filename The name of the file.
