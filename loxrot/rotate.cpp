@@ -13,7 +13,7 @@
     3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or
     promote products derived from this software without specific prior written permission.
 
-    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS �AS IS� AND ANY EXPRESS OR IMPLIED
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
     WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
     PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
     ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
@@ -23,6 +23,13 @@
     OF SUCH DAMAGE.
 */
 
+#ifdef WITH_ZLIB
+#ifdef _STATIC
+#pragma comment(lib, "zlibstat.lib") // Link with zlib statically
+#else
+#pragma comment(lib, "zlib.lib") // Link with zlib dynamically
+#endif
+#endif
 #include "rotate.h"
 #include "logging.h"
 #include <filesystem>
@@ -209,24 +216,15 @@ int Rotate::rotateFile(Config::Section& config) {
                         new_file = file + L".0";
                     }
 
-                    // Copy original file to new file and truncate original file to keep permissions
-                    if (std::stoi(config.entries[L"KeepFiles"]) == -1) {
-                        if (config.entries[L"Simulation"] != L"true") {
-                            std::filesystem::remove(file2process);
-                        }
-                        else {
-                            Logging::info(L"Simulated removal of " + file2process);
-                        }
-                        return 1;
-                    }
                     // If the file is the original file
                     if (file == file2process) {
                         if (std::stoi(config.entries[L"KeepFiles"]) == -1) {
                             if (config.entries[L"Simulation"] != L"true") {
+								Logging::debug(L"Removing file " + file2process);
                                 std::filesystem::remove(file2process);
                             }
 							else {
-								Logging::info(L"Simulated removal of " + file2process);
+								Logging::debug(L"Simulated removal of " + file2process);
 							}
                             Logging::debug(L"Deleted " + file2process);
                         }
