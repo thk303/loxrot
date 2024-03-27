@@ -13,7 +13,7 @@
     3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or
     promote products derived from this software without specific prior written permission.
 
-    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS” AND ANY EXPRESS OR IMPLIED
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
     WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
     PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
     ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
@@ -172,6 +172,11 @@ void Config::load(const std::wstring& configfile)
         if (it->second.entries.find(L"MinAge") == it->second.entries.end()) {
             it->second.entries[L"MinAge"] = L"0m";
         }
+#ifdef WITH_ZLIB
+        if (it->second.entries.find(L"FirstCompress") == it->second.entries.end()) {
+            it->second.entries[L"FirstCompress"] = L"-1";
+        }
+#endif
 	}
     // Log that the configuration parsing has finished
     Logging::debug(L"Leaving parseConfig");

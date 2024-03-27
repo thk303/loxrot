@@ -13,7 +13,7 @@
     3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or
     promote products derived from this software without specific prior written permission.
 
-    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS �AS IS� AND ANY EXPRESS OR IMPLIED
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
     WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
     PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
     ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
@@ -23,6 +23,13 @@
     OF SUCH DAMAGE.
 */
 
+#ifdef WITH_ZLIB
+#ifdef _STATIC
+#pragma comment(lib, "zlibstat.lib") // Link with zlib statically
+#else
+#pragma comment(lib, "zlib.lib") // Link with zlib dynamically
+#endif
+#endif
 #include "rotate.h"
 #include "logging.h"
 #include <filesystem>
@@ -33,6 +40,9 @@
 #include <regex>
 #include <windows.h>
 #include "tools.h"
+#ifdef WITH_ZLIB
+#include <zlib.h>
+#endif
 
 // Constructor
 Rotate::Rotate() {
@@ -42,13 +52,35 @@ Rotate::Rotate() {
 Rotate::~Rotate() {
 }
 
+#ifdef WITH_ZLIB
+bool Rotate::compressFile(const std::wstring& filename) {
+	std::ifstream ifs(filename, std::ios::binary);
+    gzFile gz = gzopen_w(std::wstring(filename + L".gz").c_str(), "wb");
+    if (!gz) {
+		Logging::error(L"Could not open " + filename + L".gz for writing");
+        ifs.close();
+        return false;
+	}
+    const int bufsize = 1024;
+    char buffer[bufsize];
+    memset(buffer, 0, bufsize);
+    while (ifs.read(buffer, bufsize)) {
+        gzwrite(gz, buffer, static_cast<int>(ifs.gcount()));
+    }
+	gzclose(gz);
+	ifs.close();
+    return true;
+}
+#endif
+
 // Get a list of files in a directory that match a pattern
 std::vector<std::wstring> Rotate::getFilesInDirectory(const std::wstring directory, const std::wstring pattern, bool returnFullPath) {
     std::vector<std::wstring> files;
     std::wregex re(pattern);
     for (const auto& entry : std::filesystem::directory_iterator(directory)) {
-        if (entry.is_regular_file() && std::regex_match(entry.path().filename().wstring(), re))
+        if (entry.is_regular_file() && std::regex_match(entry.path().filename().wstring(), re)) {
             files.push_back(returnFullPath ? entry.path().wstring() : entry.path().filename().wstring());
+        }
     }
     return files;
 }
@@ -132,6 +164,11 @@ int Rotate::rotateFile(Config::Section& config) {
                 if (std::filesystem::exists(file2process + L"." + std::to_wstring(appendix))) {
                     files.push_back(file2process + L"." + std::to_wstring(appendix));
                 }
+#if WITH_ZLIB
+                else if (std::filesystem::exists(file2process + L"." + std::to_wstring(appendix) + L".gz")) {
+                    files.push_back(file2process + L"." + std::to_wstring(appendix) + L".gz");
+                }
+#endif
                 else
                     break;
                 appendix++;
@@ -154,42 +191,40 @@ int Rotate::rotateFile(Config::Section& config) {
             files.push_back(file2process);
             // If the file is old enough to rotate
             if (files.size() > 0) {
-                std::wstring pattern = L"^(.+)\\.(\\d+)$";
-                std::wregex re(pattern);
+                int suffix(0);
 
                 std::wstring new_file(L"");
                 // For each file
                 for (auto& file : files) {
                     std::wsmatch match;
-                    auto matched = std::regex_match(file, match, re);
-                    if (matched) {
+                    if (std::regex_match(file, match, std::wregex(L"^(.+)\\.(\\d+)$"))) {
                         std::wstring base = match[1].str();
-                        int number = match[2].matched ? std::stoi(match[2].str()) + 1 : 0;
+                        suffix = match[2].matched ? std::stoi(match[2].str()) + 1 : 0;
 
-                        new_file = base + L"." + std::to_wstring(number);
+                        new_file = base + L"." + std::to_wstring(suffix);
                     }
+#if WITH_ZLIB
+                    else if (std::regex_match(file, match, std::wregex(L"^(.+)\\.(\\d+\\.gz)$"))) {
+                        std::wstring base = match[1].str();
+                        suffix = match[2].matched ? std::stoi(match[2].str()) + 1 : 0;
+
+                        new_file = base + L"." + std::to_wstring(suffix) + L".gz";
+                    }
+#endif
                     else {
+                        suffix = 0;
                         new_file = file + L".0";
                     }
 
-                    // Copy original file to new file and truncate original file to keep permissions
-                    if (std::stoi(config.entries[L"KeepFiles"]) == -1) {
-                        if (config.entries[L"Simulation"] != L"true") {
-                            std::filesystem::remove(file2process);
-                        }
-                        else {
-                            Logging::info(L"Simulated removal of " + file2process);
-                        }
-                        return 1;
-                    }
                     // If the file is the original file
                     if (file == file2process) {
                         if (std::stoi(config.entries[L"KeepFiles"]) == -1) {
                             if (config.entries[L"Simulation"] != L"true") {
+								Logging::debug(L"Removing file " + file2process);
                                 std::filesystem::remove(file2process);
                             }
 							else {
-								Logging::info(L"Simulated removal of " + file2process);
+								Logging::debug(L"Simulated removal of " + file2process);
 							}
                             Logging::debug(L"Deleted " + file2process);
                         }
@@ -214,6 +249,17 @@ int Rotate::rotateFile(Config::Section& config) {
                         if (config.entries[L"Simulation"] != L"true") {
 							std::filesystem::rename(file, new_file);
                             Logging::debug(L"Renamed " + file + L"to " + new_file);
+#ifdef WITH_ZLIB
+                            if ((suffix >= std::stoi(config.entries[L"FirstCompress"])) && (new_file.rfind(L".gz") != (new_file.length() - 3))) {
+                                if (compressFile(new_file)) {
+									Logging::info(L"Compressed " + new_file);
+                                    std::filesystem::remove(new_file);
+								}
+                                else {
+                                    Logging::error(L"Could not compress " + new_file);
+                                }
+							}
+#endif
                         }
                         else {
                             Logging::info(L"Simulated rename of " + file + L" to " + new_file);

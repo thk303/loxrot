@@ -4,5 +4,7 @@ Rotation of files in a directory specified in a configuration file.
 Runnabale as a windows service.
 
 For license information, see the LICENSE file.
+It uses zlib (https://www.zlib.net/) for compression which is not included in this repository.
+To use it, you need to download the zlib source code and compile it for your platform and define WITH_ZLIB in the build configuration.
 
 THIS SOFTWARE IS STILL IN DEVELOPMENT AND NOT READY FOR PRODUCTION USE. IT MAY NOT WORK AS EXPECTED.

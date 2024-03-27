@@ -13,7 +13,7 @@
 	3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or
 	promote products derived from this software without specific prior written permission.
 
-	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS �AS IS� AND ANY EXPRESS OR IMPLIED
+	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
 	WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
 	PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
 	ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
@@ -22,6 +22,7 @@
 	NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
 	OF SUCH DAMAGE.
 */
+
 #pragma once
 /// \brief The name of the program as a string.
 const std::string PROGRAMNAME = "loxrot";
@@ -30,4 +31,4 @@ const std::string PROGRAMNAME = "loxrot";
 const std::wstring PROGRAMNAMEW = L"loxrot";
 
 /// \brief The version of the program.
-const std::wstring VERSION = L"0.6";
+const std::wstring VERSION = L"0.7";

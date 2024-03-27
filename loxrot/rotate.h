@@ -13,7 +13,7 @@
 	3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or
 	promote products derived from this software without specific prior written permission.
 
-	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS” AND ANY EXPRESS OR IMPLIED
+	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
 	WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
 	PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
 	ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
@@ -62,7 +62,14 @@ private:
      * \return A vector of matching file names.
      */
     std::vector<std::wstring> getFilesInDirectory(const std::wstring directory, const std::wstring pattern, bool returnFullPath = false);
-
+#ifdef WITH_ZLIB
+    /**
+     * \brief Compresses a file with zlib.
+     * \param filename The filename to be compressed. The orifinal file will not be deleted.
+     * \return true or false
+     */
+    bool compressFile(const std::wstring& filename);
+#endif
     /**
      * \brief Get the age of a file in seconds.
      * \param filename The name of the file.
