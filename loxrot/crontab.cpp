@@ -64,6 +64,7 @@ bool Crontab::isTimeToRotate()
 		// Check if the current time is different from the last time the roation was done
 		Logging::debug(L"ltm.tm_min: " + std::to_wstring(ltm.tm_min) + L" last.tm_min: " + std::to_wstring(last.tm_min));
 		if (ltm.tm_wday == last.tm_wday && ltm.tm_min == last.tm_min && ltm.tm_hour == last.tm_hour && ltm.tm_mday == last.tm_mday && ltm.tm_mon == last.tm_mon && ltm.tm_year == last.tm_year) {
+			Logging::debug(L"Rotation already happend in this time slot, do nothing.");
 			return false;
 		}
 		last.tm_year = ltm.tm_year;
@@ -74,7 +75,24 @@ bool Crontab::isTimeToRotate()
 		last.tm_wday = ltm.tm_wday;
 		return true;
 	}
-    return false;
+	for (auto v : weekdays) {
+		Logging::debug(L"Configured timer weekdays entry: " + std::to_wstring(v));
+	}
+	for (auto v : months) {
+		Logging::debug(L"Configured timer months entry: " + std::to_wstring(v));
+	}
+	for (auto v : days) {
+		Logging::debug(L"Configured timer days entry: " + std::to_wstring(v));
+	}
+	for (auto v : hours) {
+		Logging::debug(L"Configured timer hours entry: " + std::to_wstring(v));
+	}
+	for (auto v : minutes) {
+		Logging::debug(L"Configured timer minutes entry: " + std::to_wstring(v));
+	}
+	Logging::debug(L"Current time: " + std::to_wstring(ltm.tm_wday) + L" " + std::to_wstring(ltm.tm_mon + 1) + L" " + std::to_wstring(ltm.tm_mday) + L" " + std::to_wstring(ltm.tm_hour) + L" " + std::to_wstring(ltm.tm_min));
+	Logging::debug(L"No time for rotation, do nothing.");
+	return false;
 }
 
 bool Crontab::parse(const std::wstring& crontabstring)
@@ -117,7 +135,7 @@ bool Crontab::parse(const std::wstring& crontabstring)
 				}
 			}
 			else if (vecnum == 3) { // month 0-11
-				for (int i = 0; i < 12; i++) {
+				for (int i = 1; i <= 12; i++) {
 					fields[vecnum]->push_back(i);
 				}
 			}

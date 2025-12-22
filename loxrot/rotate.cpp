@@ -88,35 +88,37 @@ std::vector<std::wstring> Rotate::getFilesInDirectory(const std::wstring directo
 // Get the age of a file in seconds
 long long Rotate::getFileAgeInSeconds(const std::wstring filename) {
 	// Open the file
-	HANDLE hFile = CreateFileW(filename.c_str(), FILE_WRITE_ATTRIBUTES, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	HANDLE hFile = CreateFileW(filename.c_str(), FILE_READ_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (hFile == INVALID_HANDLE_VALUE)
-		Logging::error(L"Could not open file " + filename + L" for getting creation time");
+		Logging::error(L"Could not open file " + filename + L" for getting creation time. Already opened exclusively?");
+    else {
+        FILETIME ftFile;
+        // Get the creation time of the file
+        if (!GetFileTime(hFile, &ftFile, NULL, NULL)) {
+            CloseHandle(hFile);
+            Logging::error(L"Could not get creation time of " + filename);
+        }
+        CloseHandle(hFile);
 
-    FILETIME ftFile;
-	// Get the creation time of the file
-	if (!GetFileTime(hFile, &ftFile, NULL, NULL)) {
-		CloseHandle(hFile);
-		Logging::error(L"Could not get creation time of " + filename);
-	}
-	CloseHandle(hFile);
+        // Get the current system time
+        FILETIME ftNow;
+        GetSystemTimeAsFileTime(&ftNow);
 
-	// Get the current system time
-	FILETIME ftNow;
-	GetSystemTimeAsFileTime(&ftNow);
+        // Convert FILETIME in ULARGE_INTEGER
+        ULARGE_INTEGER creationULI, currentULI;
+        creationULI.LowPart = ftFile.dwLowDateTime;
+        creationULI.HighPart = ftFile.dwHighDateTime;
+        currentULI.LowPart = ftNow.dwLowDateTime;
+        currentULI.HighPart = ftNow.dwHighDateTime;
 
-	// Convert FILETIME in ULARGE_INTEGER
-	ULARGE_INTEGER creationULI, currentULI;
-	creationULI.LowPart = ftFile.dwLowDateTime;
-	creationULI.HighPart = ftFile.dwHighDateTime;
-	currentULI.LowPart = ftNow.dwLowDateTime;
-	currentULI.HighPart = ftNow.dwHighDateTime;
+        // Calculate the difference in intervals of 100 nanoseconds
+        ULONGLONG diff = currentULI.QuadPart - creationULI.QuadPart;
 
-	// Calculate the difference in intervals of 100 nanoseconds
-	ULONGLONG diff = currentULI.QuadPart - creationULI.QuadPart;
-
-	// Convert the difference to seconds
-	long long diffSeconds = diff / 10000000ULL;
-    return diffSeconds;
+        // Convert the difference to seconds
+        long long diffSeconds = diff / 10000000ULL;
+        return diffSeconds;
+    }
+    return -1;
 }
 
 // Set the creation time of a file
@@ -151,11 +153,19 @@ int Rotate::rotateFile(Config::Section& config) {
             // Initialize the number of renames for this file
             int renames = 0;
             // If the file is too young to rotate, skip it
-            if (getFileAgeInSeconds(file2process) < std::stoi(config.entries[L"MinAge"])) {
-                if(config.entries[L"Simulation"] == L"true") {
-					Logging::info(L"File " + file2process + L" is too young to rotate. Skipping.");
-				}
+            Logging::info(L"Checking if " + file2process + L" needs to be rotated.");
+            long long fileAge = getFileAgeInSeconds(file2process);
+            if (fileAge < 0) {
+                // File age could not be retrieved, error message was written earlier.
                 continue;
+            }
+            else {
+                if (fileAge < std::stoi(config.entries[L"MinAge"])) {
+                    //if(config.entries[L"Simulation"] == L"true") {
+                    Logging::info(L"File " + file2process + L" is too young to rotate. Skipping.");
+                    //}
+                    continue;
+                }
             }
             int appendix = 0;
             std::list<std::wstring> files;
@@ -248,7 +258,7 @@ int Rotate::rotateFile(Config::Section& config) {
                     else {
                         if (config.entries[L"Simulation"] != L"true") {
 							std::filesystem::rename(file, new_file);
-                            Logging::debug(L"Renamed " + file + L"to " + new_file);
+                            Logging::debug(L"Renamed " + file + L" to " + new_file);
 #ifdef WITH_ZLIB
                             if ((suffix >= std::stoi(config.entries[L"FirstCompress"])) && (new_file.rfind(L".gz") != (new_file.length() - 3))) {
                                 if (compressFile(new_file)) {
@@ -289,10 +299,11 @@ int Rotate::rotateFile(Config::Section& config) {
 // Rotate files based on a configuration
 void Rotate::doRotates(std::pair<std::wstring, Config::Section>* config) {
     // Log that we have entered the doRotates function
-    Logging::debug(L"Entered doRotates");
+    Logging::debug(L"Entered doRotates for " + config->first);
     try {
         // If it is time to rotate
         if (config->second.crontab.isTimeToRotate()) {
+            Logging::info(L"It's time to check for rotations for " + config->first + L".");
             // Rotate the file
             rotateFile(config->second);
         }

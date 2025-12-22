@@ -229,7 +229,7 @@ void ServiceMain(int argc, wchar_t** argv)
             // Log that the service is still running
             Logging::debug(L"Service still running...");
             // Sleep for 1 second
-            std::this_thread::sleep_for(std::chrono::seconds(1));
+            std::this_thread::sleep_for(std::chrono::milliseconds(800));
         }
         // Log that the service is leaving the ServiceMain function
         Logging::debug(L"Leaving ServiceMain");
@@ -399,7 +399,7 @@ int wmain(int argc, wchar_t** argv) {
                         }
                         // If the foreground flag is set, sleep for 1 second
                         if (args.foreground) {
-                            std::this_thread::sleep_for(std::chrono::seconds(1));
+                            std::this_thread::sleep_for(std::chrono::milliseconds(800));
                         }
                         else {
                             // If the foreground flag is not set, break the loop

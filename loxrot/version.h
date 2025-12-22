@@ -31,4 +31,4 @@ const std::string PROGRAMNAME = "loxrot";
 const std::wstring PROGRAMNAMEW = L"loxrot";
 
 /// \brief The version of the program.
-const std::wstring VERSION = L"0.7";
+const std::wstring VERSION = L"30daef1_dev 22.12.2025 ";
