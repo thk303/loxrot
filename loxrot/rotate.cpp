@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2024 Thomas Kuhn
+    Copyright (c) 2024-2025 Thomas Kuhn
 
     Redistribution and use in source and binary forms, with or without modification, are permitted provided
     that the following conditions are met:
@@ -35,7 +35,6 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <fstream>
 #include <list>
 #include <regex>
 #include <windows.h>
@@ -161,9 +160,7 @@ int Rotate::rotateFile(Config::Section& config) {
             }
             else {
                 if (fileAge < std::stoi(config.entries[L"MinAge"])) {
-                    //if(config.entries[L"Simulation"] == L"true") {
                     Logging::info(L"File " + file2process + L" is too young to rotate. Skipping.");
-                    //}
                     continue;
                 }
             }

@@ -1,0 +1,5 @@
+set(CMAKE_CXX_STANDARD 20)
+set(SOURCES config.cpp crontab.cpp rotate.cpp tools.cpp main.cpp)
+include_directories(loxrot)
+target_include_directories(loxrot PRIVATE loxrot/)
+add_executable(loxrot ${SOURCES})
