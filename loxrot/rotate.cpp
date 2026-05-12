@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2024 Thomas Kuhn
+    Copyright (c) 2024-2025 Thomas Kuhn
 
     Redistribution and use in source and binary forms, with or without modification, are permitted provided
     that the following conditions are met:
@@ -25,7 +25,7 @@
 
 #ifdef WITH_ZLIB
 #ifdef _STATIC
-#pragma comment(lib, "zlibstat.lib") // Link with zlib statically
+#pragma comment(lib, "zlib.lib") // Link with zlib statically
 #else
 #pragma comment(lib, "zlib.lib") // Link with zlib dynamically
 #endif
@@ -35,7 +35,6 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <fstream>
 #include <list>
 #include <regex>
 #include <windows.h>
@@ -145,6 +144,7 @@ void Rotate::setCreationTime(const std::wstring& filename) {
 int Rotate::rotateFile(Config::Section& config) {
     // Initialize the total number of renames
     int renamesTotal = 0;
+    int firstCompress(std::stoi(config.entries[L"FirstCompress"]));
     try {
         // Get a list of files to process
         std::vector<std::wstring> files2process = getFilesInDirectory(config.entries[L"Directory"], config.entries[L"FilePattern"], true);
@@ -161,9 +161,7 @@ int Rotate::rotateFile(Config::Section& config) {
             }
             else {
                 if (fileAge < std::stoi(config.entries[L"MinAge"])) {
-                    //if(config.entries[L"Simulation"] == L"true") {
                     Logging::info(L"File " + file2process + L" is too young to rotate. Skipping.");
-                    //}
                     continue;
                 }
             }
@@ -260,7 +258,7 @@ int Rotate::rotateFile(Config::Section& config) {
 							std::filesystem::rename(file, new_file);
                             Logging::debug(L"Renamed " + file + L" to " + new_file);
 #ifdef WITH_ZLIB
-                            if ((suffix >= std::stoi(config.entries[L"FirstCompress"])) && (new_file.rfind(L".gz") != (new_file.length() - 3))) {
+                            if ((firstCompress != -1) && (suffix >= firstCompress) && (new_file.rfind(L".gz") != (new_file.length() - 3))) {
                                 if (compressFile(new_file)) {
 									Logging::info(L"Compressed " + new_file);
                                     std::filesystem::remove(new_file);

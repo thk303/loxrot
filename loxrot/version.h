@@ -1,5 +1,5 @@
 /*
-	Copyright (c) 2024 Thomas Kuhn
+	Copyright (c) 2024-2025 Thomas Kuhn
 
 	Redistribution and use in source and binary forms, with or without modification, are permitted provided
 	that the following conditions are met:
@@ -31,4 +31,4 @@ const std::string PROGRAMNAME = "loxrot";
 const std::wstring PROGRAMNAMEW = L"loxrot";
 
 /// \brief The version of the program.
-const std::wstring VERSION = L"30daef1_dev 22.12.2025 ";
+const std::wstring VERSION = L"v0.8";

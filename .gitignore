@@ -365,3 +365,6 @@ FodyWeavers.xsd
 /loxrot/Release static
 /Debug static
 /Release static
+
+build/
+*.wxs*
